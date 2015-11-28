@@ -11,9 +11,12 @@ import volvis.RaycastRenderer;
  *
  * @author michel
  */
+
+
 public class RaycastRendererPanel extends javax.swing.JPanel {
 
     RaycastRenderer renderer;
+    
     TransferFunctionEditor tfEditor = null;
     TransferFunction2DEditor tfEditor2D = null;
     
@@ -133,7 +136,9 @@ public class RaycastRendererPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void mipButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mipButtonActionPerformed
-        JOptionPane.showMessageDialog(this, "Not implemented.");
+        //this.type = "mip";
+ 
+        //JOptionPane.showMessageDialog(this, "Not implemented.");
     }//GEN-LAST:event_mipButtonActionPerformed
 
     private void slicerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slicerButtonActionPerformed
