@@ -30,6 +30,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     TransferFunction tFunc;
     TransferFunctionEditor tfEditor;
     TransferFunction2DEditor tfEditor2D;
+    public static String type;
     
     public RaycastRenderer() {
         panel = new RaycastRendererPanel(this);
