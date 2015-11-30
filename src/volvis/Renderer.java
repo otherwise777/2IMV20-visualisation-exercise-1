@@ -14,10 +14,10 @@ import util.TFChangeListener;
  * @author michel
  */
 public abstract class Renderer {
-     int winWidth, winHeight;
+    int winWidth, winHeight;
     boolean visible = false;
     boolean interactiveMode = false;
-    public static String type = "slicer";
+
     ArrayList<TFChangeListener> listeners = new ArrayList<TFChangeListener>();
 
     public Renderer() {
@@ -50,17 +50,6 @@ public abstract class Renderer {
 
     public boolean getVisible() {
         return visible;
-    }
-    public String getType() {
-        return type;
-    }
-    public void setType(String settype) {
-        if(settype != "slicer" && settype != "mip" && settype != "comp") {
-            //IOException e = new IOException();
-            //throw exception here
-            //throw e;
-        }
-        type = settype;
     }
      
     public void addTFChangeListener(TFChangeListener l) {

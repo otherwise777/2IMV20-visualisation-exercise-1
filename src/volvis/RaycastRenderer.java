@@ -30,13 +30,17 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     TransferFunction tFunc;
     TransferFunctionEditor tfEditor;
     TransferFunction2DEditor tfEditor2D;
-    public static String type;
+    public static String type = "slicer";
     
     public RaycastRenderer() {
         panel = new RaycastRendererPanel(this);
         panel.setSpeedLabel("0");
     }
-
+    
+    public void setType(String setType) {
+        type = setType;
+    }
+     
     public void setVolume(Volume vol) {
         System.out.println("Assigning volume");
         volume = vol;
@@ -130,7 +134,8 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
 
     void slicer(double[] viewMatrix) {
-
+        
+        System.out.println("viva la Nanne" + type);
         
         // clear image
         for (int j = 0; j < image.getHeight(); j++) {
