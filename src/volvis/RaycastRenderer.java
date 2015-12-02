@@ -136,6 +136,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     void slicer(double[] viewMatrix) {
         
         System.out.println("viva la Nanne" + type);
+        //type = "mip";
         
         // clear image
         for (int j = 0; j < image.getHeight(); j++) {
@@ -222,6 +223,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                 int c_green = voxelColor.g <= 1.0 ? (int) Math.floor(voxelColor.g * 255) : 255;
                 int c_blue = voxelColor.b <= 1.0 ? (int) Math.floor(voxelColor.b * 255) : 255;
                 int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+                image.setRGB(i, j, pixelColor);
                 }
             }
         }
