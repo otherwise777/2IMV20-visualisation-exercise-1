@@ -100,7 +100,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         if(interactiveMode) {
             return volume.getVoxel(x0,y0,z0);
         }
-        
+        //trilinear interpolation
         int x1 = (int) x0 + 1;
         int y1 = (int) y0 + 1;
         int z1 = (int) z0 + 1;
@@ -115,7 +115,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         double p3 = xs * volume.getVoxel(x0, y1, z0) + (1 - xs) * volume.getVoxel(x1, y1, z0);
         double p4 = xs * volume.getVoxel(x0, y0, z1) + (1 - xs) * volume.getVoxel(x1, y0, z1);
 
-        //evern pn now contains the relative value, using the segment of x
+        //every pn now contains the relative value, using the segment of x
         
         //making the line from b1 to b2 in the y direction
         double b1 = zs * p1 + (1 - zs) * p2;
@@ -129,13 +129,12 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
         
         return (short) p;
-        
+        // end of trilinear interpolation
     }
 
 
     void slicer(double[] viewMatrix) {
-        
-        System.out.println("viva la Nanne" + type);
+        //System.out.println("selected " + type);
         //type = "mip";
         
         // clear image
@@ -171,6 +170,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             for (int i = 0; i < image.getWidth(); i++) {
                 
                 if(type == "slicer") {
+                    
                     pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
                             + volumeCenter[0];
                     pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
@@ -181,12 +181,12 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                    int val = getVoxel(pixelCoord);
 
                     // Map the intensity to a grey value by linear scaling
-                    voxelColor.r = val/max;
-                    voxelColor.g = voxelColor.r;
-                    voxelColor.b = voxelColor.r;
-                    voxelColor.a = val > 0 ? 1.0 : 0.0;  // this makes intensity 0 completely transparent and the rest opaque
+                    //voxelColor.r = val/max;
+                    //voxelColor.g = voxelColor.r;
+                    //voxelColor.b = voxelColor.r;
+                    //voxelColor.a = val > 0 ? 1.0 : 0.0;  // this makes intensity 0 completely transparent and the rest opaque
                     // Alternatively, apply the transfer function to obtain a color
-                    // voxelColor = tFunc.getColor(val);
+                    voxelColor = tFunc.getColor(val);
 
 
                     // BufferedImage expects a pixel color packed as ARGB in an int
@@ -197,8 +197,12 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                     int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
                     image.setRGB(i, j, pixelColor);
                 } else if(type == "mip") {
+                    //Maximum Intensity Projection
+                    //System.out.println("selected " + type);
+                    
                     int maxVal = 0;
                     double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
+                    
                     //Loops through the pixels
                      for (int n = 0; n < maxRange; n++) {
                         pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
@@ -214,7 +218,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                             maxVal = val;
                         }
                     }
-                     // Apply the transfer function to obtain a color
+                // Apply the transfer function to obtain a color
                 voxelColor = tFunc.getColor(maxVal);
 
                 // BufferedImage expects a pixel color packed as ARGB in an int
