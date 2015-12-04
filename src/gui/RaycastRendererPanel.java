@@ -139,7 +139,7 @@ public class RaycastRendererPanel extends javax.swing.JPanel {
 
     private void mipButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mipButtonActionPerformed
         this.renderer.setType("mip");
- 
+        
         //JOptionPane.showMessageDialog(this, "Not implemented.");
     }//GEN-LAST:event_mipButtonActionPerformed
 

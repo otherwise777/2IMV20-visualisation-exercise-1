@@ -38,11 +38,13 @@ public class Volume {
     
     public short getVoxel(int x, int y, int z) { 
        short value = 0;
-
+       if(x > 255) {
+           return value;
+       }
        try{
-       value = data[x + dimX*(y + dimY * z)];
+            value = data[x + dimX*(y + dimY * z)];
        } catch(Exception e) {
-       System.out.println("x: " + x + " y: " + y + " z: " + z);
+            System.out.println("x: " + x + " y: " + y + " z: " + z);
        }
        
        return value;
