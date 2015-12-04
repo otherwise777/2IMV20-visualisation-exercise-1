@@ -39,6 +39,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     
     public void setType(String setType) {
         type = setType;
+        changed();
     }
      
     public void setVolume(Volume vol) {
@@ -197,41 +198,91 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                     int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
                     image.setRGB(i, j, pixelColor);
                 } else if(type == "mip") {
-                    //Maximum Intensity Projection
-                    //System.out.println("selected " + type);
+                    if(interactiveMode) {
+                        if(i%3 == 0 && j%3 == 0) {
+                        
                     
-                    int maxVal = 0;
-                    double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
+                            //Maximum Intensity Projection
+                            //System.out.println("selected " + type);
+
+                            int maxVal = 0;
+                            double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
+
+                            //Loops through the pixels
+                             for (int n = 0; n < maxRange; n++) {
+                                pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+                                        + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
+                                pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+                                        + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
+                                pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+                                        + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+
+                                int val = getVoxel(pixelCoord);
+
+                                if (val > maxVal) {
+                                    maxVal = val;
+                                }
+                            }
+                            // Apply the transfer function to obtain a color
+                            voxelColor = tFunc.getColor(maxVal);
+
+                            // BufferedImage expects a pixel color packed as ARGB in an int
+                            int c_alpha = voxelColor.a <= 1.0 ? (int) Math.floor(voxelColor.a * 255) : 255;
+                            int c_red = voxelColor.r <= 1.0 ? (int) Math.floor(voxelColor.r * 255) : 255;
+                            int c_green = voxelColor.g <= 1.0 ? (int) Math.floor(voxelColor.g * 255) : 255;
+                            int c_blue = voxelColor.b <= 1.0 ? (int) Math.floor(voxelColor.b * 255) : 255;
+                            int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+                            
+                            for(int ri = 0; ri < 4;ri++) {
+                                for(int rj = 0; rj < 4;rj++) {
+                                    if ((i + ri < image.getHeight()) && (j + rj < image.getWidth())) {
+                                        image.setRGB(ri + i, rj + j, pixelColor); 
+                                    }
+                                }  
+                            }
+                            
+                        }   
+                    } else {
+                        
                     
-                    //Loops through the pixels
-                     for (int n = 0; n < maxRange; n++) {
-                        pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
-                                + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
-                        pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
-                                + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
-                        pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
-                                + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+                        //Maximum Intensity Projection
+                        //System.out.println("selected " + type);
 
-                        int val = getVoxel(pixelCoord);
+                        int maxVal = 0;
+                        double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
 
-                        if (val > maxVal) {
-                            maxVal = val;
+                        //Loops through the pixels
+                         for (int n = 0; n < maxRange; n++) {
+                            pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+                                    + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
+                            pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+                                    + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
+                            pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+                                    + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+
+                            int val = getVoxel(pixelCoord);
+
+                            if (val > maxVal) {
+                                maxVal = val;
+                            }
                         }
-                    }
-                // Apply the transfer function to obtain a color
-                voxelColor = tFunc.getColor(maxVal);
+                        // Apply the transfer function to obtain a color
+                        voxelColor = tFunc.getColor(maxVal);
 
-                // BufferedImage expects a pixel color packed as ARGB in an int
-                int c_alpha = voxelColor.a <= 1.0 ? (int) Math.floor(voxelColor.a * 255) : 255;
-                int c_red = voxelColor.r <= 1.0 ? (int) Math.floor(voxelColor.r * 255) : 255;
-                int c_green = voxelColor.g <= 1.0 ? (int) Math.floor(voxelColor.g * 255) : 255;
-                int c_blue = voxelColor.b <= 1.0 ? (int) Math.floor(voxelColor.b * 255) : 255;
-                int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
-                image.setRGB(i, j, pixelColor);
+                        // BufferedImage expects a pixel color packed as ARGB in an int
+                        int c_alpha = voxelColor.a <= 1.0 ? (int) Math.floor(voxelColor.a * 255) : 255;
+                        int c_red = voxelColor.r <= 1.0 ? (int) Math.floor(voxelColor.r * 255) : 255;
+                        int c_green = voxelColor.g <= 1.0 ? (int) Math.floor(voxelColor.g * 255) : 255;
+                        int c_blue = voxelColor.b <= 1.0 ? (int) Math.floor(voxelColor.b * 255) : 255;
+                        int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+
+                        image.setRGB(i,j, pixelColor); 
+
+                    }
+                    
                 }
             }
         }
-
     }
 
 
