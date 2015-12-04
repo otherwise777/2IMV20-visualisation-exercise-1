@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import volvis.TFColor;
 import volvis.TransferFunction;
 
-/**
+/***
  *
  * @author michel
  */
