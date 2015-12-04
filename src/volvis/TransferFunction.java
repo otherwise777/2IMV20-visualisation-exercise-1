@@ -32,9 +32,29 @@ public class TransferFunction {
 
     }
     
+    public void setTFcolor(String filename, String type) {
+        //System.out.println("selected " + type);
+        if(type == "comp") {
+            //System.out.println("selected " + type + " and " + filename);
+            if (filename.contains("orange")) {
+                addControlPoint(0, 0.0, 0.0, 0.0, 0.0);
+                addControlPoint(40, 0.0, 0.0, 0.0, 0.0);
+                addControlPoint(53, 1.0, 0.4, 0.0, 0.44);
+                addControlPoint(75, 1.0, 0.666, 0.0, 1.0);
+                addControlPoint(103, 0.0, 0.0, 0.0, 0.5);
+                addControlPoint(205, 0.0, 0.0, 0.0, 0.0);
+            } else if (filename.contains("pig")) {
+                addControlPoint(0, 0.0, 0.0, 0.0, 0.0);
+                addControlPoint(27, 0.0, 0.0, 0.0, 0.0);
+                addControlPoint(79, 1.0, 0.6, 0.6, 1.0);
+                addControlPoint(144, 1.0, 0.6, 0.6, 0.3);
+                addControlPoint(204, 0.0, 0.0, 0.0, 0.0);
+                addControlPoint(255, 1.0, 1.0, 1.0, 1.0);
+            }
+        }
+    }
     
     public void setTestFunc() {
-        // control points for orange data set
         addControlPoint(0, 0.0, 0.0, 0.0, 0.0);
         addControlPoint(40, 0.0, 0.0, 0.0, 0.0);
         addControlPoint(75, 1.0, 0.666, 0.0, 1.0);

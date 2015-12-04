@@ -16,7 +16,6 @@ import util.TFChangeListener;
 import util.VectorMath;
 import volume.GradientVolume;
 import volume.Volume;
-import volume.VoxelGradient;
 
 /***
  *
@@ -31,6 +30,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     TransferFunctionEditor tfEditor;
     TransferFunction2DEditor tfEditor2D;
     public static String type = "slicer";
+    public static String filename = "";
     
     public RaycastRenderer() {
         panel = new RaycastRendererPanel(this);
@@ -39,6 +39,11 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     
     public void setType(String setType) {
         type = setType;
+        changed();
+    }
+    
+    public void currentFile(String f) {
+        filename = f;
     }
      
     public void setVolume(Volume vol) {
@@ -63,7 +68,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         // uncomment this to initialize the TF with good starting values for the orange dataset 
         //tFunc.setTestFunc();
         
-        
         tFunc.addTFChangeListener(this);
         tfEditor = new TransferFunctionEditor(tFunc, volume.getHistogram());
         
@@ -84,7 +88,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     public TransferFunctionEditor getTFPanel() {
         return tfEditor;
     }
-     
 
     short getVoxel(double[] coord) {
 
@@ -164,12 +167,13 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         // sample on a plane through the origin of the volume data
         double max = volume.getMaximum();
         TFColor voxelColor = new TFColor();
-
         
         for (int j = 0; j < image.getHeight(); j++) {
             for (int i = 0; i < image.getWidth(); i++) {
                 
-                if(type == "slicer") {
+                if(type.equals("slicer")) {
+                    // set gray color as default
+                    tFunc.setTFcolor(filename, type);
                     
                     pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
                             + volumeCenter[0];
@@ -196,7 +200,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                     int c_blue = voxelColor.b <= 1.0 ? (int) Math.floor(voxelColor.b * 255) : 255;
                     int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
                     image.setRGB(i, j, pixelColor);
-                } else if(type == "mip") {
+                } else if(type.equals("mip")) {
                     //Maximum Intensity Projection
                     //System.out.println("selected " + type);
                     
@@ -228,6 +232,46 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                 int c_blue = voxelColor.b <= 1.0 ? (int) Math.floor(voxelColor.b * 255) : 255;
                 int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
                 image.setRGB(i, j, pixelColor);
+                } else if(type.equals("comp")) {
+                    //Composite rendering (Direct Volume Rendering - DVR)
+                    
+                    // set colorscheme according to filename
+                    tFunc.setTFcolor(filename, type);
+        
+                    TFColor compColor = new TFColor(0, 0, 0, 0);
+                    double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
+                    
+                    //Loops through the pixels
+                     for (int n = 0; n < maxRange; n++) {
+                        pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+                                + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
+                        pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+                                + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
+                        pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+                                + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+
+                        int val = getVoxel(pixelCoord);
+
+                        // Apply the transfer function to obtain a color
+                        voxelColor = tFunc.getColor(val);
+
+                        compColor.a = voxelColor.a * voxelColor.a + (1 - voxelColor.a) * compColor.a;
+                        compColor.r = voxelColor.r * voxelColor.a + (1 - voxelColor.a) * compColor.r;
+                        compColor.g = voxelColor.g * voxelColor.a + (1 - voxelColor.a) * compColor.g;
+                        compColor.b = voxelColor.b * voxelColor.a + (1 - voxelColor.a) * compColor.b;
+                    }
+                     
+                    // BufferedImage expects a pixel color packed as ARGB in an int;
+                    int c_alpha = compColor.a <= 1.0 ? (int) Math.floor(compColor.a * 255) : 255;
+                    int c_red = compColor.r <= 1.0 ? (int) Math.floor(compColor.r * 255) : 255;
+                    int c_green = compColor.g <= 1.0 ? (int) Math.floor(compColor.g * 255) : 255;
+                    int c_blue = compColor.b <= 1.0 ? (int) Math.floor(compColor.b * 255) : 255;
+
+                    int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+
+                    // Set multiple pixels at lower resolution
+                    image.setRGB(i, j, pixelColor);
+              
                 }
             }
         }
@@ -357,5 +401,9 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         for (int i=0; i < listeners.size(); i++) {
             listeners.get(i).changed();
         }
+    }
+
+    public void setFileName(String filename) {
+        this.filename = filename;
     }
 }
