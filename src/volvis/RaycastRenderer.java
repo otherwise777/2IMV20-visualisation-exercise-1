@@ -281,44 +281,93 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
                     }
                 } else if(type.equals("comp")) {
-                    //Composite rendering (Direct Volume Rendering - DVR)
-                    
-                    // set colorscheme according to filename
-                    tFunc.setTFcolor(filename, type);
-        
-                    TFColor compColor = new TFColor(0, 0, 0, 0);
-                    double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
-                    
-                    //Loops through the pixels
-                     for (int n = 0; n < maxRange; n++) {
-                        pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
-                                + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
-                        pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
-                                + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
-                        pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
-                                + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+                    if(interactiveMode) {
+                        if(i%4 == 0 && j%4 == 0) {
+                            //Composite rendering (Direct Volume Rendering - DVR)
 
-                        int val = getVoxel(pixelCoord);
+                            // set colorscheme according to filename
+                            tFunc.setTFcolor(filename, type);
 
-                        // Apply the transfer function to obtain a color
-                        voxelColor = tFunc.getColor(val);
+                            TFColor compColor = new TFColor(0, 0, 0, 0);
+                            double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
 
-                        compColor.a = voxelColor.a * voxelColor.a + (1 - voxelColor.a) * compColor.a;
-                        compColor.r = voxelColor.r * voxelColor.a + (1 - voxelColor.a) * compColor.r;
-                        compColor.g = voxelColor.g * voxelColor.a + (1 - voxelColor.a) * compColor.g;
-                        compColor.b = voxelColor.b * voxelColor.a + (1 - voxelColor.a) * compColor.b;
+                            //Loops through the pixels
+                             for (int n = 0; n < maxRange; n++) {
+                                pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+                                        + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
+                                pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+                                        + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
+                                pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+                                        + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+
+                                int val = getVoxel(pixelCoord);
+
+                                // Apply the transfer function to obtain a color
+                                voxelColor = tFunc.getColor(val);
+
+                                compColor.a = voxelColor.a * voxelColor.a + (1 - voxelColor.a) * compColor.a;
+                                compColor.r = voxelColor.r * voxelColor.a + (1 - voxelColor.a) * compColor.r;
+                                compColor.g = voxelColor.g * voxelColor.a + (1 - voxelColor.a) * compColor.g;
+                                compColor.b = voxelColor.b * voxelColor.a + (1 - voxelColor.a) * compColor.b;
+                            }
+
+                            // BufferedImage expects a pixel color packed as ARGB in an int;
+                            int c_alpha = compColor.a <= 1.0 ? (int) Math.floor(compColor.a * 255) : 255;
+                            int c_red = compColor.r <= 1.0 ? (int) Math.floor(compColor.r * 255) : 255;
+                            int c_green = compColor.g <= 1.0 ? (int) Math.floor(compColor.g * 255) : 255;
+                            int c_blue = compColor.b <= 1.0 ? (int) Math.floor(compColor.b * 255) : 255;
+
+                            int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+
+                            // Set multiple pixels at lower resolution
+                            for(int ri = 0; ri < 4;ri++) {
+                                for(int rj = 0; rj < 4;rj++) {
+                                    if ((i + ri < image.getHeight()) && (j + rj < image.getWidth())) {
+                                        image.setRGB(ri + i, rj + j, pixelColor); 
+                                    }
+                                }  
+                            }
+                        }
+                    } else {
+                        //Composite rendering (Direct Volume Rendering - DVR)
+
+                        // set colorscheme according to filename
+                        tFunc.setTFcolor(filename, type);
+
+                        TFColor compColor = new TFColor(0, 0, 0, 0);
+                        double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
+
+                        //Loops through the pixels
+                         for (int n = 0; n < maxRange; n++) {
+                            pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+                                    + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
+                            pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+                                    + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
+                            pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+                                    + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+
+                            int val = getVoxel(pixelCoord);
+
+                            // Apply the transfer function to obtain a color
+                            voxelColor = tFunc.getColor(val);
+
+                            compColor.a = voxelColor.a * voxelColor.a + (1 - voxelColor.a) * compColor.a;
+                            compColor.r = voxelColor.r * voxelColor.a + (1 - voxelColor.a) * compColor.r;
+                            compColor.g = voxelColor.g * voxelColor.a + (1 - voxelColor.a) * compColor.g;
+                            compColor.b = voxelColor.b * voxelColor.a + (1 - voxelColor.a) * compColor.b;
+                        }
+
+                        // BufferedImage expects a pixel color packed as ARGB in an int;
+                        int c_alpha = compColor.a <= 1.0 ? (int) Math.floor(compColor.a * 255) : 255;
+                        int c_red = compColor.r <= 1.0 ? (int) Math.floor(compColor.r * 255) : 255;
+                        int c_green = compColor.g <= 1.0 ? (int) Math.floor(compColor.g * 255) : 255;
+                        int c_blue = compColor.b <= 1.0 ? (int) Math.floor(compColor.b * 255) : 255;
+
+                        int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+
+                        // Set multiple pixels at lower resolution
+                        image.setRGB(i, j, pixelColor);
                     }
-                     
-                    // BufferedImage expects a pixel color packed as ARGB in an int;
-                    int c_alpha = compColor.a <= 1.0 ? (int) Math.floor(compColor.a * 255) : 255;
-                    int c_red = compColor.r <= 1.0 ? (int) Math.floor(compColor.r * 255) : 255;
-                    int c_green = compColor.g <= 1.0 ? (int) Math.floor(compColor.g * 255) : 255;
-                    int c_blue = compColor.b <= 1.0 ? (int) Math.floor(compColor.b * 255) : 255;
-
-                    int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
-
-                    // Set multiple pixels at lower resolution
-                    image.setRGB(i, j, pixelColor);
               
                 }
             }
