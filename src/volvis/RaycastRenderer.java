@@ -109,14 +109,14 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         int z1 = (int) z0 + 1;
         
         double xs = coord[0] - Math.floor(coord[0]); //segment of x, removes numbers before the komma, 11,7 becomes 0,7
-        double ys = coord[0] - Math.floor(coord[0]);
-        double zs = coord[0] - Math.floor(coord[0]);
+        double ys = coord[1] - Math.floor(coord[1]);
+        double zs = coord[2] - Math.floor(coord[2]);
         
         //making the slice, plane
         double p1 = xs * volume.getVoxel(x0, y0, z0) + (1 - xs) * volume.getVoxel(x1, y0, z0);
         double p2 = xs * volume.getVoxel(x0, y0, z1) + (1 - xs) * volume.getVoxel(x1, y0, z1);
         double p3 = xs * volume.getVoxel(x0, y1, z0) + (1 - xs) * volume.getVoxel(x1, y1, z0);
-        double p4 = xs * volume.getVoxel(x0, y0, z1) + (1 - xs) * volume.getVoxel(x1, y0, z1);
+        double p4 = xs * volume.getVoxel(x0, y1, z1) + (1 - xs) * volume.getVoxel(x1, y1, z1);
 
         //every pn now contains the relative value, using the segment of x
         
@@ -126,7 +126,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         
         //we now have a line from b1 to b2 over the y axis, 
         
-        double p = ys * b1 + (1 - zs) * b2;
+        double p = (ys * b1 + (1 - ys) * b2);
         
         //we now have a value p with the voxel value
 
@@ -210,9 +210,10 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
                             int maxVal = 0;
                             double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
-
+                            double minRange = maxRange*-1;
+                            
                             //Loops through the pixels
-                             for (int n = 0; n < maxRange; n++) {
+                             for (double n = minRange; n < maxRange; n++) {
                                 pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
                                         + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
                                 pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
@@ -226,6 +227,11 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                                     maxVal = val;
                                 }
                             }
+                             // Map the intensity to a grey value by linear scaling
+                                //voxelColor.r = val/max;
+                                //voxelColor.g = voxelColor.r;
+                                //voxelColor.b = voxelColor.r;
+                                //voxelColor.a = val > minRange ? 1.0 : 0.0;  // this makes intensity 0 completely transparent and the rest opaque
                             // Apply the transfer function to obtain a color
                             voxelColor = tFunc.getColor(maxVal);
 
@@ -329,7 +335,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                                 }  
                             }
                         }
-                    } else {
+                    } else if(type.equals("gradient")){
                            // set colorscheme according to filename
                         tFunc.setTFcolor(filename, type);
 
