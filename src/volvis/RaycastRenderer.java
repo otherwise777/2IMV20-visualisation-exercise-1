@@ -88,7 +88,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     public TransferFunctionEditor getTFPanel() {
         return tfEditor;
     }
-
+    
     short getVoxel(double[] coord) {
 
         if (coord[0] < 0 || coord[0] > volume.getDimX() - 1 || coord[1] < 0 || coord[1] > volume.getDimY() - 1
@@ -304,6 +304,44 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                         voxelColor = tFunc.getColor(val);
 
                         compColor.a = voxelColor.a * voxelColor.a + (1 - voxelColor.a) * compColor.a;
+                        compColor.r = voxelColor.r * voxelColor.a + (1 - voxelColor.a) * compColor.r;
+                        compColor.g = voxelColor.g * voxelColor.a + (1 - voxelColor.a) * compColor.g;
+                        compColor.b = voxelColor.b * voxelColor.a + (1 - voxelColor.a) * compColor.b;
+                    }
+                     
+                    // BufferedImage expects a pixel color packed as ARGB in an int;
+                    int c_alpha = compColor.a <= 1.0 ? (int) Math.floor(compColor.a * 255) : 255;
+                    int c_red = compColor.r <= 1.0 ? (int) Math.floor(compColor.r * 255) : 255;
+                    int c_green = compColor.g <= 1.0 ? (int) Math.floor(compColor.g * 255) : 255;
+                    int c_blue = compColor.b <= 1.0 ? (int) Math.floor(compColor.b * 255) : 255;
+
+                    int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+
+                    // Set multiple pixels at lower resolution
+                    image.setRGB(i, j, pixelColor);
+              
+                } else if(type.equals("gradient")) {
+                    //Gradient-based opacity weighting (Levoy's approach)
+                    
+                    TFColor compColor = new TFColor(0, 0, 0, 0);
+                    double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
+                    
+                    //Loops through the pixels
+                     for (int n = 0; n < maxRange; n++) {
+                        pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+                                + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
+                        pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+                                + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
+                        pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+                                + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+
+                        int val = getVoxel(pixelCoord);
+                        // int aval = getGradientVoxel(pixelCoord); // alpha value
+
+                        // Apply the transfer function to obtain a color
+                        voxelColor = tFunc.getColor(val);
+
+                        compColor.a = 1;
                         compColor.r = voxelColor.r * voxelColor.a + (1 - voxelColor.a) * compColor.r;
                         compColor.g = voxelColor.g * voxelColor.a + (1 - voxelColor.a) * compColor.g;
                         compColor.b = voxelColor.b * voxelColor.a + (1 - voxelColor.a) * compColor.b;
