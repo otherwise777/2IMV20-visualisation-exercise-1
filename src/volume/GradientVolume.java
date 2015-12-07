@@ -20,7 +20,7 @@ public class GradientVolume {
         maxmag = -1.0;
     }
 
-public VoxelGradient getGradient(int x, int y, int z) {
+    public VoxelGradient getGradient(int x, int y, int z) {
         return data[x + dimX * (y + dimY * z)];
     }
 
