@@ -30,6 +30,8 @@ public class TransferFunction2DEditor extends javax.swing.JPanel {
     private short maxIntensity;
     private double maxGradientMagnitude;
     private ArrayList<TFChangeListener> listeners = new ArrayList<TFChangeListener>();
+    
+    private boolean TF2Dset = false; //avoid endless loops
 
     
     public TransferFunction2DEditor(Volume volume, GradientVolume gradientvolume) {
@@ -46,14 +48,35 @@ public class TransferFunction2DEditor extends javax.swing.JPanel {
         labelGradMax.setText(Double.toString(Math.floor(10 * maxGradientMagnitude) / 10));
         labelMinVal.setText("0");
         labelMaxVal.setText(Integer.toString(maxIntensity));
-
+        
+        // This sets the base values for the 2D TF editor :)
         triangleWidget = new TriangleWidget((short) (maxIntensity / 2), 1.0);
+
         setSelectedInfo();
     }
 
     public void addTFChangeListener(TFChangeListener l) {
         if (!listeners.contains(l)) {
             listeners.add(l);
+        }
+    }
+    
+    public void newTF2DSettings(String filename) {
+        //System.out.println("Filename: " + filename);        
+        if (filename.contains("bonsai")) {
+            if (!TF2Dset){
+                //System.out.println("made it!");
+                // set vals according to filename
+                triangleWidget = new TriangleWidget((short) 0.15, 1.0);
+                TF2Dset = true;
+            }
+        } else {
+            // fallback: use base settings
+            if (!TF2Dset){
+                // set vals according to filename
+                triangleWidget = new TriangleWidget((short) (maxIntensity / 2), 1.0);
+                TF2Dset = true;
+            }
         }
     }
 
