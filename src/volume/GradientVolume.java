@@ -11,52 +11,6 @@ import volvis.TransferFunction;
  * @author michel
  */
 public class GradientVolume {
-    
-    TransferFunction tFunc;
-    private Volume gradVolume = null;
-    public boolean DoneMakingGrad = false; 
-    
-    private void getGradientArray() {
-        
-        gradVolume = new Volume(volume.getDimX(), volume.getDimY(), volume.getDimZ());
-    
-        //Gradient function
-        for (int x = 0; x < dimX; x++) {
-            for (int y = 0; y < dimY; y++) {
-                for (int z = 0; z < dimZ; z++) {
-                    double gv_1 = 0.5 * (volume.getVoxel(x + 1, y, z) - volume.getVoxel(x - 1, y, z));
-                    double gv_2 = 0.5 * (volume.getVoxel(x, y + 1, z) - volume.getVoxel(x, y - 1, z));
-                    double gv_3 = 0.5 * (volume.getVoxel(x, y, z + 1) - volume.getVoxel(x, y, z - 1));
-                    
-                    double gradMagVal = Math.sqrt(Math.pow(gv_1, 2) + Math.pow(gv_2, 2) + Math.pow(gv_3, 2));
-                    
-                    double a;
-                    double aTotal = 1;
-                    for (int p = 1; p < tFunc.getControlPoints().size() - 1; p++) {
-                        double funcVal = ((double) tFunc.getControlPoints().get(p).value) / 255;
-                        double alphaVal = tFunc.getControlPoints().get(p).color.a;
-                        
-                        // Equation to get a(xi)
-                        double Fvp1 = ((double) tFunc.getControlPoints().get(p + 1).value) / 255;
-                        short voxelVal = volume.getVoxel(x, y, z);
-                        double fxi = ((double) voxelVal) / 255;
-                        if (funcVal <= fxi && fxi <= Fvp1) {
-                            double alphaVp1 = tFunc.getControlPoints().get(p + 1).color.a;
-                            a = (gradMagVal / 255) * (alphaVp1 * ((fxi - funcVal) / (Fvp1 - funcVal)) + alphaVal * ((Fvp1 - fxi) / (Fvp1 - funcVal)));
-                        } else {
-                            a = 0;
-                        }
-
-                        aTotal = (1 - a) * aTotal;
-                    }
-                    aTotal = 1 - aTotal;
-
-                    gradVolume.setVoxel(x, y, z, (short) (aTotal * 255));
-                }
-            }
-        }
-        DoneMakingGrad = true;
-    }
 
     public GradientVolume(Volume vol) {
         volume = vol;
@@ -103,7 +57,28 @@ public class GradientVolume {
         for (int i=0; i<data.length; i++) {
             data[i] = zero;
         }
-                
+        
+    // We have to extend this part with the forumla for gradients for xyx
+    
+    
+        // For each pixelCoordinate in the volume calculate the gx, gy and gz
+        for (int i=1; i<volume.getDimX()-1;i++) {
+            for (int j=1; j<volume.getDimY()-1;j++) {
+                for (int k=1; k<volume.getDimZ()-1;k++) {
+                    
+                    // gx = (f(x-1,y,z)-f(x+1,y,z))/2, gy = (f(x,y-1,z)-f(x,y+1,z))/2, etc
+                    float gv_1 = ((volume.getVoxel(i-1, j, k) - volume.getVoxel(i+1, j, k)) / 2.0f);
+                    float gv_2 = ((volume.getVoxel(i, j-1, k) - volume.getVoxel(i, j+1, k)) / 2.0f);
+                    float gv_3 = ((volume.getVoxel(i, j, k-1) - volume.getVoxel(i, j, k+1)) / 2.0f);
+                    
+                    // get the value of the VoxelGradient based on the calculated gx, gy and gz
+                    VoxelGradient value = new VoxelGradient(gv_1,gv_2,gv_3);
+                    
+                    // set the VoxelGradient
+                    this.setGradient(i, j, k, value);
+                }
+            }
+        }
     }
     
     public double getMaxGradientMagnitude() {

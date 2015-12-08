@@ -15,6 +15,7 @@ import javax.media.opengl.GL2;
 import util.TFChangeListener;
 import util.VectorMath;
 import volume.GradientVolume;
+import volume.VoxelGradient;
 import volume.Volume;
 
 /***
@@ -166,10 +167,18 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
         // sample on a plane through the origin of the volume data
         double max = volume.getMaximum();
+        double limit = 1.0;
+        
+        // Accept user input for gradient
+        int gradI = tfEditor2D.triangleWidget.baseIntensity;
+        double gradR = tfEditor2D.triangleWidget.radius;
+        TFColor gradC = tfEditor2D.triangleWidget.color;
+        
         TFColor voxelColor = new TFColor();
         
-        for (int j = 0; j < image.getHeight(); j++) {
-            for (int i = 0; i < image.getWidth(); i++) {
+        for (int i = 0; i < image.getWidth(); i++) {
+            for (int j = 0; j < image.getHeight(); j++) {
+            
                 
                 if(type.equals("slicer")) {
                     // set gray color as default
@@ -185,12 +194,12 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                    int val = getVoxel(pixelCoord);
 
                     // Map the intensity to a grey value by linear scaling
-                    //voxelColor.r = val/max;
-                    //voxelColor.g = voxelColor.r;
-                    //voxelColor.b = voxelColor.r;
-                    //voxelColor.a = val > 0 ? 1.0 : 0.0;  // this makes intensity 0 completely transparent and the rest opaque
+                    voxelColor.r = val/max;
+                    voxelColor.g = voxelColor.r;
+                    voxelColor.b = voxelColor.r;
+                    voxelColor.a = val > 0 ? 1.0 : 0.0;  // this makes intensity 0 completely transparent and the rest opaque
                     // Alternatively, apply the transfer function to obtain a color
-                    voxelColor = tFunc.getColor(val);
+                    //voxelColor = tFunc.getColor(val);
 
 
                     // BufferedImage expects a pixel color packed as ARGB in an int
@@ -249,7 +258,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                                     }
                                 }  
                             }
-                            
                         }   
                     } else {
                         //If optimization fails
@@ -287,11 +295,56 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
                     }
                 } else if(type.equals("comp")) {
-                    //Composite rendering (Direct Volume Rendering - DVR)
+                //Composite rendering (Direct Volume Rendering - DVR)
                     if(interactiveMode) {
                         if(i%3 == 0 && j%3 == 0) {
-                            
-                        
+
+                    // set colorscheme according to filename
+                    tFunc.setTFcolor(filename, type);
+
+                    TFColor compColor = new TFColor(0, 0, 0, 0);
+                    double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
+
+                    //Loops through the pixels
+                     for (int n = 0; n < maxRange; n++) {
+                        pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+                                + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
+                        pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+                                + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
+                        pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+                                + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+
+                        int val = getVoxel(pixelCoord);
+
+                        // Apply the transfer function to obtain a color
+                        voxelColor = tFunc.getColor(val);
+
+                        compColor.a = voxelColor.a * voxelColor.a + (1 - voxelColor.a) * compColor.a;
+                        compColor.r = voxelColor.r * voxelColor.a + (1 - voxelColor.a) * compColor.r;
+                        compColor.g = voxelColor.g * voxelColor.a + (1 - voxelColor.a) * compColor.g;
+                        compColor.b = voxelColor.b * voxelColor.a + (1 - voxelColor.a) * compColor.b;
+                    }
+
+                    // BufferedImage expects a pixel color packed as ARGB in an int;
+                    int c_alpha = compColor.a <= 1.0 ? (int) Math.floor(compColor.a * 255) : 255;
+                    int c_red = compColor.r <= 1.0 ? (int) Math.floor(compColor.r * 255) : 255;
+                    int c_green = compColor.g <= 1.0 ? (int) Math.floor(compColor.g * 255) : 255;
+                    int c_blue = compColor.b <= 1.0 ? (int) Math.floor(compColor.b * 255) : 255;
+
+                    int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+
+                    for(int ri = 0; ri < 4;ri++) {
+                                for(int rj = 0; rj < 4;rj++) {
+                                    if ((i + ri < image.getHeight()) && (j + rj < image.getWidth())) {
+                                        image.setRGB(ri + i, rj + j, pixelColor); 
+                                    }
+                                }  
+                            }
+                        }   
+                    } else {
+                        //If optimization fails
+                        //System.out.println("selected " + type);
+
                         // set colorscheme according to filename
                         tFunc.setTFcolor(filename, type);
 
@@ -325,55 +378,60 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                         int c_blue = compColor.b <= 1.0 ? (int) Math.floor(compColor.b * 255) : 255;
 
                         int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+                        
+                        image.setRGB(i,j, pixelColor); 
+                    }
+                } else if(type.equals("gradient")){
+                    // Gradient-based opacity weighting
+                    TFColor predecessor = new TFColor();
+                    TFColor successor = new TFColor(); 
+                        
+                    pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+                            + volumeCenter[0];
+                    pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+                            + volumeCenter[1];
+                    pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+                            + volumeCenter[2];
 
-                        // Set multiple pixels at lower resolution
-                            for(int ri = 0; ri < 4;ri++) {
-                                for(int rj = 0; rj < 4;rj++) {
-                                    if ((i + ri < image.getHeight()) && (j + rj < image.getWidth())) {
-                                        image.setRGB(ri + i, rj + j, pixelColor); 
-                                    }
-                                }  
-                            }
+                    int val = getVoxel(pixelCoord);
+                        
+                    if ( ( (pixelCoord[0] < volume.getDimX() && pixelCoord[0] >= 0) || (pixelCoord[1] < volume.getDimY() && pixelCoord[1] >= 0) || (pixelCoord[2] < volume.getDimZ() && pixelCoord[2] >= 0) ) && val > limit) {
+                        // Get user defined color
+                        voxelColor = gradC;
+                        VoxelGradient voxGrad = gradients.getGradient((int)Math.floor(pixelCoord[0]), (int)Math.floor(pixelCoord[1]), (int)Math.floor(pixelCoord[2])); 
+
+                        // gradient intensity check
+                        if (val == gradI && voxGrad.mag == 0) {
+                            voxelColor.a = 1.0;
                         }
-                    } else if(type.equals("gradient")){
-                           // set colorscheme according to filename
-                        tFunc.setTFcolor(filename, type);
-
-                        TFColor compColor = new TFColor(0, 0, 0, 0);
-                        double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
-
-                        //Loops through the pixels
-                         for (int n = 0; n < maxRange; n++) {
-                            pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
-                                    + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
-                            pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
-                                    + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
-                            pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
-                                    + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
-
-                            int val = getVoxel(pixelCoord);
-
-                            // Apply the transfer function to obtain a color
-                            voxelColor = tFunc.getColor(val);
-
-                            compColor.a = voxelColor.a * voxelColor.a + (1 - voxelColor.a) * compColor.a;
-                            compColor.r = voxelColor.r * voxelColor.a + (1 - voxelColor.a) * compColor.r;
-                            compColor.g = voxelColor.g * voxelColor.a + (1 - voxelColor.a) * compColor.g;
-                            compColor.b = voxelColor.b * voxelColor.a + (1 - voxelColor.a) * compColor.b;
+                        else if (voxGrad.mag > 0.0 && ((val - gradR * voxGrad.mag) <= gradI) && ((val + gradR * voxGrad.mag) >= gradI)){
+                            voxelColor.a = 1.0 - (1 / gradR) * (Math.abs((gradI - val)/ voxGrad.mag));
                         }
+                        else 
+                            voxelColor.a = 0.0;
+
+                        // apply opacity weights to colors of voxels and their successors                
+                        successor.r = voxelColor.a * voxelColor.r + (1 - voxelColor.a) * predecessor.r;
+                        successor.g = voxelColor.a * voxelColor.g + (1 - voxelColor.a) * predecessor.g;
+                        successor.b = voxelColor.a * voxelColor.b + (1 - voxelColor.a) * predecessor.b;
+
+                        successor.a = (1 - voxelColor.a) * predecessor.a;
+
+                        predecessor = successor;
+
+                    }
 
                         // BufferedImage expects a pixel color packed as ARGB in an int;
-                        int c_alpha = compColor.a <= 1.0 ? (int) Math.floor(compColor.a * 255) : 255;
-                        int c_red = compColor.r <= 1.0 ? (int) Math.floor(compColor.r * 255) : 255;
-                        int c_green = compColor.g <= 1.0 ? (int) Math.floor(compColor.g * 255) : 255;
-                        int c_blue = compColor.b <= 1.0 ? (int) Math.floor(compColor.b * 255) : 255;
+                        int c_alpha = (1 - successor.a) <= 1.0 ? (int) Math.floor((1 - successor.a) * 255) : 255;
+                        int c_red = successor.r <= 1.0 ? (int) Math.floor(successor.r * 255) : 255;
+                        int c_green = successor.g <= 1.0 ? (int) Math.floor(successor.g * 255) : 255;
+                        int c_blue = successor.b <= 1.0 ? (int) Math.floor(successor.b * 255) : 255;
 
                         int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
 
                         // Set multiple pixels at lower resolution
                         image.setRGB(i, j, pixelColor);  
                     }
-                }
             }
         }
     }

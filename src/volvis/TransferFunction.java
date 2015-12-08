@@ -51,6 +51,8 @@ public class TransferFunction {
                 addControlPoint(204, 0.0, 0.0, 0.0, 0.0);
                 addControlPoint(255, 1.0, 1.0, 1.0, 1.0);
             }
+        } else if(type == "mip") {
+            addControlPoint(20, 0.0, 0.0, 0.0, 1.0);
         }
     }
     
