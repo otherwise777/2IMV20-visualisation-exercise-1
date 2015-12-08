@@ -41,10 +41,11 @@ public class Volume {
        if((x >= 255 )|| (y >= 255 ) || (z >= 255 )) {
            return value;
        } 
+       
        try{
             value = data[x + dimX*(y + dimY * z)];
        } catch(Exception e) {
-            System.out.println("x: " + x + " y: " + y + " z: " + z);
+            //System.out.println("x: " + x + " y: " + y + " z: " + z);
        }
        
        return value;

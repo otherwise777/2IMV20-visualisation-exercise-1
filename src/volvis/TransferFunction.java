@@ -14,6 +14,8 @@ import util.TFChangeListener;
  */
 public class TransferFunction {
 
+    private boolean added = false; //check for mip color
+    private boolean added1 = false; //check for comp colors
     private ArrayList<TFChangeListener> listeners = new ArrayList<TFChangeListener>();
     
     public TransferFunction(short min, short max) {
@@ -33,26 +35,39 @@ public class TransferFunction {
     }
     
     public void setTFcolor(String filename, String type) {
+        
         //System.out.println("selected " + type);
-        if(type == "comp") {
+        if (type.equals("comp")) {
             //System.out.println("selected " + type + " and " + filename);
             if (filename.contains("orange")) {
-                addControlPoint(0, 0.0, 0.0, 0.0, 0.0);
-                addControlPoint(40, 0.0, 0.0, 0.0, 0.0);
-                addControlPoint(53, 1.0, 0.4, 0.0, 0.44);
-                addControlPoint(75, 1.0, 0.666, 0.0, 1.0);
-                addControlPoint(103, 0.0, 0.0, 0.0, 0.5);
-                addControlPoint(205, 0.0, 0.0, 0.0, 0.0);
+                if( !added1 ){
+                    addControlPoint(20, 0.0, 0.0, 0.0, 0.0); //reset MIP color
+                    addControlPoint(0, 0.0, 0.0, 0.0, 0.0);
+                    addControlPoint(40, 0.0, 0.0, 0.0, 0.0);
+                    addControlPoint(53, 1.0, 0.4, 0.0, 0.44);
+                    addControlPoint(75, 1.0, 0.666, 0.0, 1.0);
+                    addControlPoint(103, 0.0, 0.0, 0.0, 0.5);
+                    addControlPoint(205, 0.0, 0.0, 0.0, 0.0);
+                    added1 = true;
+                }
             } else if (filename.contains("pig")) {
-                addControlPoint(0, 0.0, 0.0, 0.0, 0.0);
-                addControlPoint(27, 0.0, 0.0, 0.0, 0.0);
-                addControlPoint(79, 1.0, 0.6, 0.6, 1.0);
-                addControlPoint(144, 1.0, 0.6, 0.6, 0.3);
-                addControlPoint(204, 0.0, 0.0, 0.0, 0.0);
-                addControlPoint(255, 1.0, 1.0, 1.0, 1.0);
+                if( !added1 ){
+                    addControlPoint(20, 0.0, 0.0, 0.0, 0.0); // reset MIP color
+                    addControlPoint(0, 0.0, 0.0, 0.0, 0.0);
+                    addControlPoint(27, 0.0, 0.0, 0.0, 0.0);
+                    addControlPoint(79, 1.0, 0.6, 0.6, 1.0);
+                    addControlPoint(144, 1.0, 0.6, 0.6, 0.3);
+                    addControlPoint(204, 0.0, 0.0, 0.0, 0.0);
+                    addControlPoint(255, 1.0, 1.0, 1.0, 1.0);
+                    added1 = true;
+                }
             }
-        } else if(type == "mip") {
-            addControlPoint(20, 0.0, 0.0, 0.0, 1.0);
+        } else if (type.equals("mip")) {
+            if( !added )
+            {
+                addControlPoint(20, 0.0, 0.0, 0.0, 0.8);
+                added = true;
+            }
         }
     }
     

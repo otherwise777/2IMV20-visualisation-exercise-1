@@ -212,6 +212,9 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                 } else if(type.equals("mip")) {
                     //Maximum Intensity Projection
                     //System.out.println("selected " + type);
+                    
+                    tFunc.setTFcolor(filename, type);
+                    
                     if(interactiveMode) {
                         if(i%3 == 0 && j%3 == 0) {
                             //Increase loading speed Maximum Intensity Projection
