@@ -216,6 +216,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                     tFunc.setTFcolor(filename, type);
                     
                     if(interactiveMode) {
+                        //decreases the amount of pixels calculated
                         if(i%3 == 0 && j%3 == 0) {
                             //Increase loading speed Maximum Intensity Projection
                             //System.out.println("selected " + type);
@@ -225,7 +226,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                             double minRange = maxRange*-1;
                             
                             //Loops through the pixels
-                             for (double n = minRange; n < maxRange; n++) {
+                             for (double n = minRange; n < maxRange; n+=2) {
                                 pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
                                         + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
                                 pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
@@ -254,8 +255,8 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                             int c_blue = voxelColor.b <= 1.0 ? (int) Math.floor(voxelColor.b * 255) : 255;
                             int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
                             
-                            for(int ri = 0; ri < 4;ri++) {
-                                for(int rj = 0; rj < 4;rj++) {
+                            for(int ri = 0; ri < 3;ri++) {
+                                for(int rj = 0; rj < 3;rj++) {
                                     if ((i + ri < image.getHeight()) && (j + rj < image.getWidth())) {
                                         image.setRGB(ri + i, rj + j, pixelColor); 
                                     }
@@ -263,8 +264,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                             }
                         }   
                     } else {
-                        //If optimization fails
-                        //System.out.println("selected " + type);
+                        //if there is no mouse interaction
 
                         int maxVal = 0;
                         double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
@@ -303,43 +303,43 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                     if(interactiveMode) {
                         if(i%3 == 0 && j%3 == 0) {
 
-                    // set colorscheme according to filename
-                    tFunc.setTFcolor(filename, type);
+                        // set colorscheme according to filename
+                            tFunc.setTFcolor(filename, type);
 
-                    TFColor compColor = new TFColor(0, 0, 0, 0);
-                    double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
-                    double minRange = maxRange*-1;
-                    
-                    //Loops through the pixels
-                     for (double n = minRange; n < maxRange; n++) {
-                        pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
-                                + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
-                        pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
-                                + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
-                        pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
-                                + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+                            TFColor compColor = new TFColor(0, 0, 0, 0);
+                            double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
+                            double minRange = maxRange*-1;
 
-                        int val = getVoxel(pixelCoord);
+                            //Loops through the pixels
+                            for (double n = minRange; n < maxRange; n+=2) {
+                                pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+                                        + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
+                                pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+                                        + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
+                                pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+                                        + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
 
-                        // Apply the transfer function to obtain a color
-                        voxelColor = tFunc.getColor(val);
+                                int val = getVoxel(pixelCoord);
 
-                        compColor.a = voxelColor.a * voxelColor.a + (1 - voxelColor.a) * compColor.a;
-                        compColor.r = voxelColor.r * voxelColor.a + (1 - voxelColor.a) * compColor.r;
-                        compColor.g = voxelColor.g * voxelColor.a + (1 - voxelColor.a) * compColor.g;
-                        compColor.b = voxelColor.b * voxelColor.a + (1 - voxelColor.a) * compColor.b;
-                    }
+                                // Apply the transfer function to obtain a color
+                                voxelColor = tFunc.getColor(val);
 
-                    // BufferedImage expects a pixel color packed as ARGB in an int;
-                    int c_alpha = compColor.a <= 1.0 ? (int) Math.floor(compColor.a * 255) : 255;
-                    int c_red = compColor.r <= 1.0 ? (int) Math.floor(compColor.r * 255) : 255;
-                    int c_green = compColor.g <= 1.0 ? (int) Math.floor(compColor.g * 255) : 255;
-                    int c_blue = compColor.b <= 1.0 ? (int) Math.floor(compColor.b * 255) : 255;
+                                compColor.a = voxelColor.a * voxelColor.a + (1 - voxelColor.a) * compColor.a;
+                                compColor.r = voxelColor.r * voxelColor.a + (1 - voxelColor.a) * compColor.r;
+                                compColor.g = voxelColor.g * voxelColor.a + (1 - voxelColor.a) * compColor.g;
+                                compColor.b = voxelColor.b * voxelColor.a + (1 - voxelColor.a) * compColor.b;
+                            }
 
-                    int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+                            // BufferedImage expects a pixel color packed as ARGB in an int;
+                            int c_alpha = compColor.a <= 1.0 ? (int) Math.floor(compColor.a * 255) : 255;
+                            int c_red = compColor.r <= 1.0 ? (int) Math.floor(compColor.r * 255) : 255;
+                            int c_green = compColor.g <= 1.0 ? (int) Math.floor(compColor.g * 255) : 255;
+                            int c_blue = compColor.b <= 1.0 ? (int) Math.floor(compColor.b * 255) : 255;
 
-                    for(int ri = 0; ri < 4;ri++) {
-                                for(int rj = 0; rj < 4;rj++) {
+                            int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+
+                            for(int ri = 0; ri < 3;ri++) {
+                                for(int rj = 0; rj < 3;rj++) {
                                     if ((i + ri < image.getHeight()) && (j + rj < image.getWidth())) {
                                         image.setRGB(ri + i, rj + j, pixelColor); 
                                     }
@@ -388,26 +388,102 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                         image.setRGB(i,j, pixelColor); 
                     }
                 } else if(type.equals("gradient")){
+                    if(interactiveMode) {
+                        if(i%3 == 0 && j%3 == 0) {
+                        // Gradient-based opacity weighting
+                            tfEditor2D.newTF2DSettings(filename);
+
+                            TFColor predecessor = new TFColor();
+                            TFColor successor = new TFColor(); 
+
+                            double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
+                            double minRange = maxRange*-1;
+
+                            //Loops through the pixels
+                             for (double n = minRange; n < maxRange; n++) {
+                                pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+                                        + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
+                                pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+                                        + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
+                                pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+                                        + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
+
+                                int val = getVoxel(pixelCoord);
+
+                                if ( ( (pixelCoord[0] < volume.getDimX() && pixelCoord[0] >= 0) || (pixelCoord[1] < volume.getDimY() && pixelCoord[1] >= 0) || (pixelCoord[2] < volume.getDimZ() && pixelCoord[2] >= 0) ) && val > limit) {
+                                    // Get user defined color
+                                    voxelColor = gradC;
+                                    VoxelGradient voxGrad = gradients.getGradient((int)Math.floor(pixelCoord[0]), (int)Math.floor(pixelCoord[1]), (int)Math.floor(pixelCoord[2])); 
+
+                                    // gradient intensity check
+                                    if (val == gradI && voxGrad.mag == 0) {
+                                        voxelColor.a = 1.0;
+                                    }
+                                    else if (voxGrad.mag > 0.0 && ((val - gradR * voxGrad.mag) <= gradI) && ((val + gradR * voxGrad.mag) >= gradI)){
+                                        voxelColor.a = 1.0 - (1 / gradR) * (Math.abs((gradI - val)/ voxGrad.mag));
+                                    }
+                                    else {
+                                        voxelColor.a = 0.0;
+
+                                        // apply opacity weights to colors of voxels and their successors                
+                                        successor.r = voxelColor.a * voxelColor.r + (1 - voxelColor.a) * predecessor.r;
+                                        successor.g = voxelColor.a * voxelColor.g + (1 - voxelColor.a) * predecessor.g;
+                                        successor.b = voxelColor.a * voxelColor.b + (1 - voxelColor.a) * predecessor.b;
+
+                                        successor.a = (1 - voxelColor.a) * predecessor.a;
+
+                                        predecessor = successor;
+
+                                    }
+                                }
+
+        //                    pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+        //                            + volumeCenter[0];
+        //                    pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+        //                            + volumeCenter[1];
+        //                    pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+        //                            + volumeCenter[2];
+
+                                // BufferedImage expects a pixel color packed as ARGB in an int;
+                                int c_alpha = (1 - successor.a) <= 1.0 ? (int) Math.floor((1 - successor.a) * 255) : 255;
+                                int c_red = successor.r <= 1.0 ? (int) Math.floor(successor.r * 255) : 255;
+                                int c_green = successor.g <= 1.0 ? (int) Math.floor(successor.g * 255) : 255;
+                                int c_blue = successor.b <= 1.0 ? (int) Math.floor(successor.b * 255) : 255;
+
+                                int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+
+                                // Set multiple pixels at lower resolution
+                                for(int ri = 0; ri < 3;ri++) {
+                                    for(int rj = 0; rj < 3;rj++) {
+                                        if ((i + ri < image.getHeight()) && (j + rj < image.getWidth())) {
+                                            image.setRGB(ri + i, rj + j, pixelColor); 
+                                        }
+                                    }  
+                                } 
+                                  
+                            }    
+                        } 
+                    } else {
                     // Gradient-based opacity weighting
-                    tfEditor2D.newTF2DSettings(filename);
-                    
-                    TFColor predecessor = new TFColor();
-                    TFColor successor = new TFColor(); 
-                    
-                    double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
+                        tfEditor2D.newTF2DSettings(filename);
+
+                        TFColor predecessor = new TFColor();
+                        TFColor successor = new TFColor(); 
+
+                        double maxRange = Math.abs(viewVec[0]) > (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ()) ? volume.getDimX() : (Math.abs(viewVec[1]) > Math.abs(viewVec[2]) ? volume.getDimY() : volume.getDimZ());
                         double minRange = maxRange*-1;
-                        
+
                         //Loops through the pixels
-                         for (double n = minRange; n < maxRange; n++) {
+                        for (double n = minRange; n < maxRange; n++) {
                             pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
                                     + viewVec[0] * (n - (maxRange / 2)) + volumeCenter[0];
                             pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
                                     + viewVec[1] * (n - (maxRange / 2)) + volumeCenter[1];
                             pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
                                     + viewVec[2] * (n - (maxRange / 2)) + volumeCenter[2];
-                            
+
                             int val = getVoxel(pixelCoord);
-                            
+
                             if ( ( (pixelCoord[0] < volume.getDimX() && pixelCoord[0] >= 0) || (pixelCoord[1] < volume.getDimY() && pixelCoord[1] >= 0) || (pixelCoord[2] < volume.getDimZ() && pixelCoord[2] >= 0) ) && val > limit) {
                                 // Get user defined color
                                 voxelColor = gradC;
@@ -420,39 +496,41 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                                 else if (voxGrad.mag > 0.0 && ((val - gradR * voxGrad.mag) <= gradI) && ((val + gradR * voxGrad.mag) >= gradI)){
                                     voxelColor.a = 1.0 - (1 / gradR) * (Math.abs((gradI - val)/ voxGrad.mag));
                                 }
-                                else 
+                                else {
                                     voxelColor.a = 0.0;
 
-                                // apply opacity weights to colors of voxels and their successors                
-                                successor.r = voxelColor.a * voxelColor.r + (1 - voxelColor.a) * predecessor.r;
-                                successor.g = voxelColor.a * voxelColor.g + (1 - voxelColor.a) * predecessor.g;
-                                successor.b = voxelColor.a * voxelColor.b + (1 - voxelColor.a) * predecessor.b;
+                                    // apply opacity weights to colors of voxels and their successors                
+                                    successor.r = voxelColor.a * voxelColor.r + (1 - voxelColor.a) * predecessor.r;
+                                    successor.g = voxelColor.a * voxelColor.g + (1 - voxelColor.a) * predecessor.g;
+                                    successor.b = voxelColor.a * voxelColor.b + (1 - voxelColor.a) * predecessor.b;
 
-                                successor.a = (1 - voxelColor.a) * predecessor.a;
+                                    successor.a = (1 - voxelColor.a) * predecessor.a;
 
-                                predecessor = successor;
+                                    predecessor = successor;
 
+                                }
                             }
+
+    //                    pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
+    //                            + volumeCenter[0];
+    //                    pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
+    //                            + volumeCenter[1];
+    //                    pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
+    //                            + volumeCenter[2];
+
+                            // BufferedImage expects a pixel color packed as ARGB in an int;
+                            int c_alpha = (1 - successor.a) <= 1.0 ? (int) Math.floor((1 - successor.a) * 255) : 255;
+                            int c_red = successor.r <= 1.0 ? (int) Math.floor(successor.r * 255) : 255;
+                            int c_green = successor.g <= 1.0 ? (int) Math.floor(successor.g * 255) : 255;
+                            int c_blue = successor.b <= 1.0 ? (int) Math.floor(successor.b * 255) : 255;
+
+                            int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+
+                            // Set multiple pixels at lower resolution
+                            image.setRGB(i, j, pixelColor);
                         }
-                         
-//                    pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter)
-//                            + volumeCenter[0];
-//                    pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter)
-//                            + volumeCenter[1];
-//                    pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
-//                            + volumeCenter[2];
-
-                        // BufferedImage expects a pixel color packed as ARGB in an int;
-                        int c_alpha = (1 - successor.a) <= 1.0 ? (int) Math.floor((1 - successor.a) * 255) : 255;
-                        int c_red = successor.r <= 1.0 ? (int) Math.floor(successor.r * 255) : 255;
-                        int c_green = successor.g <= 1.0 ? (int) Math.floor(successor.g * 255) : 255;
-                        int c_blue = successor.b <= 1.0 ? (int) Math.floor(successor.b * 255) : 255;
-
-                        int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
-
-                        // Set multiple pixels at lower resolution
-                        image.setRGB(i, j, pixelColor);  
                     }
+                }
             }
         }
     }
