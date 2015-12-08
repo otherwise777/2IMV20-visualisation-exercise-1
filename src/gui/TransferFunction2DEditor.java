@@ -65,17 +65,25 @@ public class TransferFunction2DEditor extends javax.swing.JPanel {
         //System.out.println("Filename: " + filename);        
         if (filename.contains("bonsai")) {
             if (!TF2Dset){
-                //System.out.println("made it!");
+                //System.out.println("My intensity = " + maxIntensity*0.3280632411067194);
                 // set vals according to filename
-                triangleWidget = new TriangleWidget((short) 0.15, 1.0);
+                triangleWidget.baseIntensity = (short)83;
+                triangleWidget.radius = 7.0;
+                triangleWidget.color = new TFColor(0.0, 204.0/255.0, 153.0/255.0, 0.9);
+                setSelectedInfo();
                 TF2Dset = true;
+                changed();
             }
         } else {
             // fallback: use base settings
             if (!TF2Dset){
                 // set vals according to filename
-                triangleWidget = new TriangleWidget((short) (maxIntensity / 2), 1.0);
+                triangleWidget.baseIntensity = (short) (maxIntensity/2);
+                triangleWidget.radius = 1.0;
+                triangleWidget.color = new TFColor(0.0, 204.0/255.0, 153.0/255.0, 0.9);
+                setSelectedInfo();
                 TF2Dset = true;
+                changed();
             }
         }
     }
